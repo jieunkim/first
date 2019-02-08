@@ -17,7 +17,7 @@ env.hosts = [
     REMOTE_HOST_SSH,
 ]
 env.use_ssh_config = True
-env.key_filename   = 'zzini.pem'
+env.key_filename   = '../zzini.pem'
 
 project_folder = '/home/{}/{}'.format(env.user,PROJECT_NAME)
 
