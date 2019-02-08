@@ -3,17 +3,8 @@ from fabric.api import local, run, sudo, env
 import os
 import json
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-envs = json.load( open(os.path.join(PROJECT_DIR,'deploy.json')) )
-'''
-{'REPO_URL': 'https://github.com/jieunkim/first', 
-'PROJECT_NAME': 'first', 
-'REMOTE_HOST': 'ec2-54-180-113-32.ap-northeast-2.compute.amazonaws.com', 
-'REMOTE_HOST_SSH': '54.180.113.32', 
-'REMOTE_USER': 'ubuntu'}
-'''
+PROJECT_DIR = os.path.dirname( os.path.abspath(__file__) )
+envs = json.load( open( os.path.join(PROJECT_DIR,'deploy.json') ) )
 
 REPO_URL        = envs['REPO_URL']
 PROJECT_NAME    = envs['PROJECT_NAME']
@@ -21,18 +12,14 @@ REMOTE_HOST     = envs['REMOTE_HOST']
 REMOTE_HOST_SSH = envs['REMOTE_HOST_SSH']
 REMOTE_USER     = envs['REMOTE_USER']
 
-env.user = REMOTE_USER
+env.user  = REMOTE_USER
 env.hosts = [
     REMOTE_HOST_SSH,
 ]
-
 env.use_ssh_config = True
-env.key_filename = 'zzini.pem' 
+env.key_filename   = 'zzini.pem'
 
-
-project_folder = '/home/{}/{}' .format(env.user,PROJECT_NAME)
-print(project_folder)
-
+project_folder = '/home/{}/{}'.format(env.user,PROJECT_NAME)
 
 apt_requirements = [
     'curl',
@@ -47,52 +34,39 @@ apt_requirements = [
     'libffi-dev'
 ]
 
-
-'''
-작성이 모두 끝난 후 
- > fab new_initSever
- 소스가 변경된 후
- > fab update
- '''
-
 def new_initSever():
     _setup()
     update()
 
-
 def _setup():
     _init_apt()
-    _install_apt_packages(apt_requirements)
-    _makeing_virtualenv()
+    _install_apt_packages( apt_requirements )
+    _making_virtualenv()
 
 def _init_apt():
-    yn = input('ubuntu linux update ok?:[y/n]')
-    if yn == 'y': 
+    yn = input('ubuntu linux update ok?: [y/n]')
+    if yn == 'y':
         sudo('apt-get update && apt-get -y upgrade')
 
-
-def _install_apt_packages(requires):
+def _install_apt_packages( requires ):    
     reqs = ''
-    for req in requires:
-        reqs += ' ' + req
-    sudo('apt-get -y install' + reqs)
+    for req in requires:        
+        reqs += ' ' + req    
+    sudo( 'apt-get -y install ' + reqs )
 
-
-def _makeing_virtualenv():
-
+def _making_virtualenv():    
     if not exists('~/.virtualenvs'):
-        run('mkdir~/.virtualenvs')
-        sudo('pip3 install virtualenv virtualenvwrapper')
+        run('mkdir ~/.virtualenvs')        
+        sudo('pip3 install virtualenv virtualenvwrapper')        
         cmd = '''
             "# python virtualenv global setting
             export WORKON_HOME=~/.virtualenvs
             # python location
-            export VIRTUALENVWRAPPER_PYTHON="$(command\which python3)"
+            export VIRTUALENVWRAPPER_PYTHON="$(command \which python3)"
             # shell 실행
             source /usr/local/bin/virtualenvwrapper.sh"
         '''
-        run('echo {} >> ~/.bashrc'.format(cmd))
-
+        run('echo {} >> ~/.bashrc'.format(cmd) ) 
 
 def update():
     _git_update()
@@ -101,26 +75,23 @@ def update():
     _grant_apache()
     _restart_apache()
 
-
 def _git_update():
-    if exists(project_folder + '/.git'): 
+    if exists(project_folder + '/.git'):
         run('cd %s && git fetch' % (project_folder,))
-    else: 
-        run('git clone %s %s' % (REPO_URL, project_folder))
+    else:        
+        run('git clone %s %s' % (REPO_URL, project_folder))    
     current_commit = local("git log -n 1 --format=%H", capture=True)
     run('cd %s && git reset --hard %s' % (project_folder, current_commit))
-
-
+    
 def _virtualenv_update():
     virtualenv_folder = project_folder + '/../.virtualenvs/{}'.format(PROJECT_NAME)
-
+    
     if not exists(virtualenv_folder + '/bin/pip'):
         run('cd /home/%s/.virtualenvs && virtualenv %s' % (env.user, PROJECT_NAME))
 
     run('%s/bin/pip install -r %s/requirements.txt' % (
         virtualenv_folder, project_folder
     ))
-
 
 def _ufw_allow():
     sudo("ufw allow 'Apache Full'")
@@ -149,7 +120,6 @@ def _virtualhost_make():
     )
     sudo('echo {} > /etc/apache2/sites-available/{}.conf'.format(script, PROJECT_NAME))
     sudo('a2ensite {}.conf'.format(PROJECT_NAME))
-
 
 def _grant_apache():
     sudo('chown -R :www-data ~/{}'.format(PROJECT_NAME))
