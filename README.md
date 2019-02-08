@@ -10,6 +10,9 @@ wsgi.py : entry 파일, 서버구동시 시작점
 requirements.txt : 서버 구동시 필요한 모듈을 기술 (버전 포함)
 
 # 서버 로그 확인
+리눅스 명령
+> tail -f 로그파일명 => 이 파일이 변환되는 것을
+  실시간적으로 읽어서 출력해라
 접속 로그 (파이썬 로그)
 > tail -f /var/log/apache2/access.log
 > ctrl + c
